@@ -1,0 +1,8 @@
+{
+  "name": "AuraCare Assistant",
+  "description": "An AI-powered assistant that humanizes healthcare administration by handling patient intake, optimizing resource allocation, and managing routine processes for a smoother experience for both patients and providers.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}

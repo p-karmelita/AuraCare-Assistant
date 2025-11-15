@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AuraCare Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --glow-cyan: 0 0 15px rgba(6, 182, 212, 0.8), 0 0 25px rgba(6, 182, 212, 0.6), 0 0 45px rgba(6, 182, 212, 0.4);
+        --text-glow-cyan: 0 0 8px rgba(165, 243, 252, 0.8);
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out forwards;
+      }
+       @keyframes pulse-slow {
+        0%, 100% { opacity: 0.6; transform: scale(0.98); }
+        50% { opacity: 0.3; transform: scale(1); }
+      }
+      .animate-pulse-slow {
+        animation: pulse-slow 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes background-glow {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+      }
+       @keyframes pulse-border {
+        0%, 100% { border-color: rgba(6, 182, 212, 0.4); transform: scale(1.0); }
+        50% { border-color: rgba(6, 182, 212, 0.8); transform: scale(1.02); }
+      }
+      .animate-pulse-border {
+          animation: pulse-border 3s ease-in-out infinite;
+      }
+      body {
+        background-image: url('https://storage.googleapis.com/aistudio-hosting/workspace-assets/auracare-assistant/background.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: #e2e8f0; /* slate-200 */
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      }
+      body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.3) 0%, rgba(12, 20, 38, 0.98) 100%);
+        backdrop-filter: blur(10px);
+        animation: background-glow 12s ease-in-out infinite;
+        z-index: -1;
+      }
+      /* Custom scrollbar for a more modern look */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(30, 41, 59, 0.5); /* slate-800 */
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #0891b2; /* cyan-600 */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #06b6d4; /* cyan-500 */
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-slate-900">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
