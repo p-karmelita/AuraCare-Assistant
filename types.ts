@@ -19,9 +19,29 @@ export interface Doctor {
   bio?: string;
 }
 
-export type AppStep = 'intake' | 'specialty' | 'doctors' | 'confirmation';
+export interface SpecialtyResponse {
+    specialty: string;
+    analysis: string;
+}
+
+export type AppPage = 'home' | 'intake' | 'about';
+export type IntakeStep = 'intake' | 'specialty' | 'doctors' | 'confirmation';
+
 
 export interface GroundingSource {
   uri: string;
   title: string;
+}
+
+export interface User {
+    name: string;
+    email: string;
+    picture: string;
+}
+
+// FIX: Add a global declaration for the `google` object on the `window` to resolve TypeScript errors.
+declare global {
+  interface Window {
+    google: any;
+  }
 }

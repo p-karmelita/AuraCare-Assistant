@@ -1,11 +1,25 @@
 
 
-import { GoogleGenAI, Type } from "@google/genai";
-import { Doctor, GroundingSource, Patient } from '../types';
+import { GoogleGenAI, Type, Chat } from "@google/genai";
+import { Doctor, GroundingSource, Patient, SpecialtyResponse } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
-export const getSpecialtySuggestion = async (patient: Patient): Promise<string> => {
+let chat: Chat | null = null;
+
+const getChatSession = () => {
+    if (!chat) {
+        chat = ai.chats.create({
+            model: 'gemini-2.5-flash',
+            config: {
+                systemInstruction: 'You are AuraCare Assistant, a friendly and helpful AI chatbot. Your purpose is to answer general health-related questions. You must not provide medical advice, diagnoses, or treatment plans. If a user asks for medical advice, you must gently decline and recommend they consult a qualified healthcare professional. Keep your answers concise and easy to understand.',
+            },
+        });
+    }
+    return chat;
+}
+
+export const getSpecialtySuggestion = async (patient: Patient): Promise<SpecialtyResponse> => {
   try {
     const prompt = `A patient provides the following information:
 - Symptoms: "${patient.symptoms}"
@@ -13,14 +27,32 @@ export const getSpecialtySuggestion = async (patient: Patient): Promise<string> 
 - Previous Surgeries: "${patient.surgeries || 'None'}"
 - Current Medications: "${patient.medications || 'None'}"
 
-Based on all this information, what is the most likely medical specialty they should see? Respond with only the name of the specialty (e.g., 'Cardiology', 'Dermatology', 'Neurology'). Do not add any formatting or explanation.`;
+Based on all this information, determine the most likely medical specialty they should see. 
+Respond with a single, valid JSON object with two keys:
+1. "specialty": A string containing only the name of the recommended medical specialty (e.g., "Cardiology").
+2. "analysis": A string containing a detailed, paragraph-long explanation for why this specialty was chosen, based on the provided symptoms and medical history.
+
+Do not include any other text, markdown formatting, or explanation outside of the JSON object.`;
     
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    specialty: { type: Type.STRING },
+                    analysis: { type: Type.STRING }
+                },
+                required: ['specialty', 'analysis']
+            }
+        }
     });
-    
-    return response.text.trim();
+
+    let jsonStr = response.text.trim();
+    return JSON.parse(jsonStr) as SpecialtyResponse;
+
   } catch (error) {
     console.error("Error fetching specialty suggestion:", error);
     throw new Error("Failed to get specialty suggestion from AI.");
@@ -51,7 +83,6 @@ export const getDoctorSuggestions = async (
             }
         });
 
-        // The model may sometimes wrap the JSON in markdown, so we extract it.
         const textResponse = response.text.trim();
         const jsonMatch = textResponse.match(/```(json)?\s*([\s\S]*?)\s*```/);
         const jsonString = jsonMatch ? jsonMatch[2] : textResponse;
@@ -76,5 +107,16 @@ export const getDoctorSuggestions = async (
     } catch (error) {
         console.error("Error fetching doctor suggestions with Maps:", error);
         throw new Error("Failed to get doctor suggestions from AI with Maps data.");
+    }
+};
+
+export const getChatbotResponse = async (message: string): Promise<string> => {
+    try {
+        const chatSession = getChatSession();
+        const response = await chatSession.sendMessage({ message });
+        return response.text;
+    } catch (error) {
+        console.error("Error fetching chatbot response:", error);
+        throw new Error("Failed to get response from AuraCare Assistant.");
     }
 };

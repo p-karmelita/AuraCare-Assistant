@@ -1,137 +1,125 @@
 
-import React, { useState, useCallback } from 'react';
-import { AppStep, Doctor, Patient } from './types';
-import PatientIntakeForm from './components/PatientIntakeForm';
-import SpecialtySuggestion from './components/SpecialtySuggestion';
-import DoctorClinicSelector from './components/DoctorClinicSelector';
-import Confirmation from './components/Confirmation';
-import VoiceIntakeModal from './components/VoiceIntakeModal';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AppPage, User } from './types';
 import { AuraCareLogo } from './components/icons/AuraCareLogo';
+import Chatbot from './components/Chatbot';
+import AboutPage from './components/AboutPage';
+import HomePage from './components/HomePage';
+import IntakePage from './components/IntakePage';
+import Footer from './components/Footer';
+import LoginPrompt from './components/LoginPrompt';
+import * as authService from './services/authService';
 
 const App: React.FC = () => {
-  const [step, setStep] = useState<AppStep>('intake');
-  const [patientData, setPatientData] = useState<Patient | null>(null);
-  const [specialty, setSpecialty] = useState<string>('');
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [showVoiceIntake, setShowVoiceIntake] = useState(false);
+  const [page, setPage] = useState<AppPage>('home');
+  const [user, setUser] = useState<User | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  const handleIntakeSubmit = (data: Patient) => {
-    setPatientData(data);
-    setShowVoiceIntake(false);
-    setStep('specialty');
-  };
-
-  const handleSpecialtyFound = (foundSpecialty: string) => {
-    setSpecialty(foundSpecialty);
-  };
-  
-  const handleProceedToDoctors = () => {
-    setStep('doctors');
-  };
-
-  const handleDoctorSelect = (doctor: Doctor) => {
-    setSelectedDoctor(doctor);
-    setStep('confirmation');
-  };
-  
-  const handleBackToSpecialty = () => {
-    setStep('specialty');
-  };
-
-  const handleStartOver = useCallback(() => {
-    setStep('intake');
-    setPatientData(null);
-    setSpecialty('');
-    setSelectedDoctor(null);
+  useEffect(() => {
+    const sessionUser = authService.getUserFromSession();
+    if (sessionUser) {
+      setUser(sessionUser);
+    }
+    authService.initGoogleAuth(handleLoginSuccess);
   }, []);
-
-  const handleStartVoiceIntake = () => {
-    setShowVoiceIntake(true);
+  
+  const handleLoginSuccess = useCallback((loggedInUser: User) => {
+      setUser(loggedInUser);
+      setShowLoginPrompt(false);
+      // If the user logged in to start the intake, navigate them there.
+      if (page !== 'intake') {
+          navigateTo('intake');
+      }
+  }, [page]);
+  
+  const handleLogout = () => {
+    authService.signOut(() => {
+        setUser(null);
+        navigateTo('home');
+    });
   };
 
-  const handleCloseVoiceIntake = () => {
-    setShowVoiceIntake(false);
+  const navigateTo = (targetPage: AppPage) => {
+    setPage(targetPage);
+  };
+  
+  const handleStartIntake = () => {
+      if (user) {
+          navigateTo('intake');
+      } else {
+          setShowLoginPrompt(true);
+      }
   };
 
-  const renderStep = () => {
-    switch (step) {
+  const renderPage = () => {
+    switch (page) {
+      case 'home':
+        return <HomePage onGetStarted={handleStartIntake} />;
       case 'intake':
-        return <PatientIntakeForm onSubmit={handleIntakeSubmit} onStartVoiceIntake={handleStartVoiceIntake} />;
-      case 'specialty':
-        return patientData && (
-          <SpecialtySuggestion
-            patient={patientData}
-            onSpecialtyFound={handleSpecialtyFound}
-            onProceed={handleProceedToDoctors}
-          />
-        );
-      case 'doctors':
-        return specialty && <DoctorClinicSelector specialty={specialty} onSelect={handleDoctorSelect} onBack={handleBackToSpecialty} />;
-      case 'confirmation':
-        return patientData && selectedDoctor && (
-          <Confirmation
-            patient={patientData}
-            doctor={selectedDoctor}
-            onStartOver={handleStartOver}
-          />
-        );
+        return user ? <IntakePage /> : <HomePage onGetStarted={handleStartIntake} />;
+      case 'about':
+        return <AboutPage onGetStarted={handleStartIntake} />;
       default:
-        return null;
+        return <HomePage onGetStarted={handleStartIntake} />;
     }
   };
 
-  const getStepTitle = () => {
-     switch (step) {
-      case 'intake':
-        return 'Patient Intake';
-      case 'specialty':
-        return 'AI Symptom Analysis';
-      case 'doctors':
-        return 'Find a Specialist';
-      case 'confirmation':
-        return 'Confirmation & Automated Workflows';
-      default:
-        return 'AuraCare Assistant';
-    }
-  }
+  const NavLink: React.FC<{ targetPage?: AppPage; onClick?: () => void; children: React.ReactNode; isCurrent: boolean }> = ({ targetPage, onClick, children, isCurrent }) => (
+    <button 
+      type="button"
+      onClick={onClick ? onClick : () => targetPage && navigateTo(targetPage)} 
+      className={`text-slate-300 hover:text-cyan-300 transition-colors duration-300 font-medium bg-transparent border-none p-2 rounded-md ${isCurrent ? 'text-cyan-300 bg-cyan-500/10' : ''}`}
+    >
+      {children}
+    </button>
+  );
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-2 sm:p-4 lg:p-8 font-sans relative">
-      <header 
-        className="absolute top-0 left-0 p-4 sm:p-6 lg:p-8 flex items-center cursor-pointer group"
-        onClick={handleStartOver}
-        role="button"
-        aria-label="Go to homepage"
-      >
-        <AuraCareLogo className="w-10 h-10 text-cyan-400 transition-all duration-300 group-hover:text-cyan-300" style={{ filter: `drop-shadow(0 0 10px #06b6d4)` }} />
-        <h1 className="ml-3 text-2xl font-bold text-slate-100 transition-all duration-300 group-hover:text-white" style={{ textShadow: 'var(--text-glow-cyan)' }}>
-            AuraCare Assistant
-        </h1>
+    <div className="min-h-screen w-full flex flex-col font-sans relative">
+      <header className="sticky top-0 z-30 p-4 sm:p-6 lg:p-4 w-full flex items-center justify-between bg-slate-900/50 backdrop-blur-lg border-b border-slate-700/50">
+        <div 
+            className="flex items-center cursor-pointer group"
+            onClick={() => navigateTo('home')}
+            role="button"
+            aria-label="Go to homepage"
+        >
+            <AuraCareLogo className="w-10 h-10 text-cyan-400 transition-all duration-300 group-hover:text-cyan-300" style={{ filter: `drop-shadow(0 0 10px #06b6d4)` }} />
+            <h1 className="ml-3 text-2xl font-bold text-slate-100 transition-all duration-300 group-hover:text-white" style={{ textShadow: 'var(--text-glow-cyan)' }}>
+                AuraCare Assistant
+            </h1>
+        </div>
+        <nav className="flex items-center space-x-2 sm:space-x-4">
+            <NavLink targetPage="home" isCurrent={page === 'home'}>Home</NavLink>
+            <NavLink onClick={handleStartIntake} isCurrent={page === 'intake'}>Start Intake</NavLink>
+            <NavLink targetPage="about" isCurrent={page === 'about'}>About Us</NavLink>
+            <div className="w-px h-6 bg-slate-600"></div>
+             {user ? (
+                <div className="flex items-center space-x-3">
+                    <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full border-2 border-cyan-500/50" />
+                    <button onClick={handleLogout} className="text-slate-300 hover:text-red-400 transition-colors text-sm font-medium">Logout</button>
+                </div>
+            ) : (
+                 <div className="flex items-center space-x-2">
+                    <button onClick={() => authService.signIn()} className="text-slate-300 hover:text-cyan-300 transition-colors text-sm font-medium">Login</button>
+                    <button onClick={() => authService.signIn()} className="px-3 py-1.5 bg-cyan-600 text-white rounded-md text-sm font-semibold hover:bg-cyan-500 transition-colors shadow-[0_0_8px_rgba(6,182,212,0.4)]">Sign Up</button>
+                </div>
+            )}
+        </nav>
       </header>
-
-      {/* Active Step Container */}
-      <div className="z-10 w-full max-w-2xl animate-fade-in mt-16 sm:mt-0">
-          <div
-          className={`
-              bg-black/40 backdrop-blur-2xl border border-cyan-400/50 rounded-lg shadow-[0_0_30px_rgba(6,182,212,0.3),inset_0_0_10px_rgba(6,182,212,0.1)]
-              flex flex-col h-[85vh] max-h-[750px]
-          `}
-          >
-          <h3 className="text-md font-bold p-4 border-b text-cyan-200 border-cyan-300/20 flex-shrink-0">
-              {getStepTitle()}
-          </h3>
-          <div className="p-4 sm:p-6 overflow-y-auto flex-grow">
-              {renderStep()}
-          </div>
-          </div>
-      </div>
-
-      {showVoiceIntake && (
-        <VoiceIntakeModal 
-          onClose={handleCloseVoiceIntake} 
-          onSubmit={handleIntakeSubmit} 
-        />
+      
+      <main className="flex-grow flex flex-col items-center justify-center p-2 sm:p-4 lg:p-8">
+        {renderPage()}
+      </main>
+      
+      {showLoginPrompt && (
+          <LoginPrompt 
+              onClose={() => setShowLoginPrompt(false)} 
+              onLoginSuccess={handleLoginSuccess}
+          />
       )}
+
+      <Footer onNavigate={navigateTo} />
+      <Chatbot />
     </div>
   );
 };

@@ -156,9 +156,7 @@ const DoctorClinicSelector: React.FC<DoctorClinicSelectorProps> = ({ specialty, 
                 <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
                     {sources.map((source, index) => (
                         <li key={index}>
-                            <a href={source.uri} target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 underline transition-colors">
-                                {source.title}
-                            </a>
+                           <span>{source.title}</span>
                         </li>
                     ))}
                 </ul>
