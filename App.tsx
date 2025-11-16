@@ -1,22 +1,57 @@
 
-import React, { useState } from 'react';
-import { AppPage } from './types';
+import React, { useState, useEffect } from 'react';
+import { AppPage, User } from './types';
+import * as authService from './services/authService';
 import { AuraCareLogo } from './components/icons/AuraCareLogo';
 import Chatbot from './components/Chatbot';
 import AboutPage from './components/AboutPage';
 import HomePage from './components/HomePage';
 import IntakePage from './components/IntakePage';
 import Footer from './components/Footer';
+import LoginPrompt from './components/LoginPrompt';
 
 const App: React.FC = () => {
   const [page, setPage] = useState<AppPage>('home');
+  const [user, setUser] = useState<User | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  useEffect(() => {
+    // Check for existing user session on initial load
+    const existingUser = authService.getUserFromSession();
+    if (existingUser) {
+      setUser(existingUser);
+    }
+    // Initialize Google Auth once
+    authService.initGoogleAuth(handleLoginSuccess);
+  }, []);
+
+  const handleLoginSuccess = (loggedInUser: User) => {
+    setUser(loggedInUser);
+    setShowLoginPrompt(false);
+    // If the user was trying to start intake, navigate them there now
+    if (page !== 'intake') {
+      // Optional: you might want to navigate to intake automatically after login
+      // navigateTo('intake');
+    }
+  };
+
+  const handleLogout = () => {
+    authService.signOut(() => {
+      setUser(null);
+      navigateTo('home'); // Go to home page on logout
+    });
+  };
 
   const navigateTo = (targetPage: AppPage) => {
     setPage(targetPage);
   };
   
   const handleStartIntake = () => {
+    if (user) {
       navigateTo('intake');
+    } else {
+      setShowLoginPrompt(true);
+    }
   };
 
   const renderPage = () => {
@@ -24,7 +59,7 @@ const App: React.FC = () => {
       case 'home':
         return <HomePage onGetStarted={handleStartIntake} />;
       case 'intake':
-        return <IntakePage />;
+        return user ? <IntakePage /> : <HomePage onGetStarted={handleStartIntake} />;
       case 'about':
         return <AboutPage onGetStarted={handleStartIntake} />;
       default:
@@ -60,12 +95,25 @@ const App: React.FC = () => {
             <NavLink targetPage="home" isCurrent={page === 'home'}>Home</NavLink>
             <NavLink onClick={handleStartIntake} isCurrent={page === 'intake'}>Start Intake</NavLink>
             <NavLink targetPage="about" isCurrent={page === 'about'}>About Us</NavLink>
+             <div className="border-l border-slate-700 h-6 mx-2"></div>
+            {user ? (
+                <div className="flex items-center space-x-3">
+                    <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full border-2 border-slate-600" />
+                    <button onClick={handleLogout} className="text-slate-300 hover:text-red-400 transition-colors text-sm font-medium">Logout</button>
+                </div>
+            ) : (
+                 <button onClick={() => setShowLoginPrompt(true)} className="text-cyan-300 hover:text-cyan-200 transition-colors text-sm font-semibold bg-cyan-500/10 px-3 py-1.5 rounded-md">
+                    Sign In
+                </button>
+            )}
         </nav>
       </header>
       
       <main className="flex-grow flex flex-col items-center justify-center p-2 sm:p-4 lg:p-8">
         {renderPage()}
       </main>
+
+      {showLoginPrompt && <LoginPrompt onClose={() => setShowLoginPrompt(false)} onLoginSuccess={handleLoginSuccess} />}
 
       <Footer onNavigate={navigateTo} />
       <Chatbot />

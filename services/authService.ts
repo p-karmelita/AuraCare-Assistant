@@ -2,7 +2,7 @@
 import { jwtDecode } from 'jwt-decode';
 import { User } from '../types';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = '597762679776-cmn3i21p4d5gp6jil5dsm4dm4e0urhvv.apps.googleusercontent.com';
 const USER_SESSION_KEY = 'auraCareUserSession';
 
 // This function initializes the Google Identity Services client.
