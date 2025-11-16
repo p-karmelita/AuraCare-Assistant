@@ -1,18 +1,33 @@
 
 import React, { useState, useCallback } from 'react';
-import { IntakeStep, Doctor, Patient, SpecialtyResponse } from '../types';
+import { IntakeStep, Doctor, Patient } from '../types';
 import PatientIntakeForm from './PatientIntakeForm';
 import SpecialtySuggestion from './SpecialtySuggestion';
 import DoctorClinicSelector from './DoctorClinicSelector';
 import Confirmation from './Confirmation';
 import VoiceIntakeModal from './VoiceIntakeModal';
+import ImageAnalysis from './ImageAnalysis';
+
+const initialPatientData: Patient = {
+    fullName: '',
+    dob: '',
+    contact: '',
+    symptoms: '',
+    pastConditions: '',
+    surgeries: '',
+    medications: '',
+};
 
 const IntakePage: React.FC = () => {
     const [step, setStep] = useState<IntakeStep>('intake');
-    const [patientData, setPatientData] = useState<Patient | null>(null);
+    const [patientData, setPatientData] = useState<Patient>(initialPatientData);
     const [specialty, setSpecialty] = useState<string>('');
     const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
     const [showVoiceIntake, setShowVoiceIntake] = useState(false);
+
+    const handleDataChange = (field: keyof Patient, value: string) => {
+        setPatientData(prev => ({...prev, [field]: value}));
+    };
 
     const handleIntakeSubmit = (data: Patient) => {
         setPatientData(data);
@@ -39,7 +54,7 @@ const IntakePage: React.FC = () => {
 
     const handleStartOver = useCallback(() => {
         setStep('intake');
-        setPatientData(null);
+        setPatientData(initialPatientData);
         setSpecialty('');
         setSelectedDoctor(null);
     }, []);
@@ -47,6 +62,19 @@ const IntakePage: React.FC = () => {
     const handleStartVoiceIntake = () => {
         setShowVoiceIntake(true);
     };
+    
+    const handleStartImageAnalysis = () => {
+        setStep('imageAnalysis');
+    };
+
+    const handleImageAnalysisComplete = (analysisText: string) => {
+        handleDataChange('symptoms', analysisText);
+        setStep('intake');
+    };
+
+    const handleBackToIntake = () => {
+        setStep('intake');
+    }
 
     const handleCloseVoiceIntake = () => {
         setShowVoiceIntake(false);
@@ -55,9 +83,20 @@ const IntakePage: React.FC = () => {
     const renderStep = () => {
         switch (step) {
             case 'intake':
-                return <PatientIntakeForm onSubmit={handleIntakeSubmit} onStartVoiceIntake={handleStartVoiceIntake} />;
+                return <PatientIntakeForm 
+                    patientData={patientData}
+                    onDataChange={handleDataChange}
+                    onSubmit={handleIntakeSubmit} 
+                    onStartVoiceIntake={handleStartVoiceIntake}
+                    onStartImageAnalysis={handleStartImageAnalysis} 
+                />;
+            case 'imageAnalysis':
+                return <ImageAnalysis 
+                    onBack={handleBackToIntake}
+                    onAnalysisComplete={handleImageAnalysisComplete}
+                />;
             case 'specialty':
-                return patientData && (
+                return (
                     <SpecialtySuggestion
                         patient={patientData}
                         onSpecialtyFound={handleSpecialtyFound}
@@ -67,7 +106,7 @@ const IntakePage: React.FC = () => {
             case 'doctors':
                 return specialty && <DoctorClinicSelector specialty={specialty} onSelect={handleDoctorSelect} onBack={handleBackToSpecialty} />;
             case 'confirmation':
-                return patientData && selectedDoctor && (
+                return selectedDoctor && (
                     <Confirmation
                         patient={patientData}
                         doctor={selectedDoctor}
@@ -83,6 +122,8 @@ const IntakePage: React.FC = () => {
         switch (step) {
             case 'intake':
                 return 'Patient Intake';
+            case 'imageAnalysis':
+                return 'Premium AI Image Analysis';
             case 'specialty':
                 return 'AI Symptom Analysis';
             case 'doctors':

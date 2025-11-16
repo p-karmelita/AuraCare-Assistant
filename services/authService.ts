@@ -1,69 +1,30 @@
 
-import { jwtDecode } from 'jwt-decode';
 import { User } from '../types';
 
-const GOOGLE_CLIENT_ID = '597762679776-cmn3i21p4d5gp6jil5dsm4dm4e0urhvv.apps.googleusercontent.com';
+const REGISTERED_USERS_KEY = 'auraCareRegisteredUsers';
 const USER_SESSION_KEY = 'auraCareUserSession';
 
-// This function initializes the Google Identity Services client.
-export const initGoogleAuth = (callback: (user: User) => void): void => {
-    if (!GOOGLE_CLIENT_ID) {
-        console.error("Google Client ID is not configured.");
-        return;
-    }
-    
-    if (typeof window.google === 'undefined') {
-        console.error("Google Identity Services script not loaded.");
-        return;
-    }
-
-    window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (response: any) => {
-            handleCredentialResponse(response, callback);
-        },
-    });
-};
-
-// This function handles the response from Google Sign-In.
-const handleCredentialResponse = (response: any, callback: (user: User) => void) => {
+// Helper to get registered users from localStorage
+const getRegisteredUsers = (): Record<string, string> => {
     try {
-        const userObject: any = jwtDecode(response.credential);
-        const user: User = {
-            name: userObject.name,
-            email: userObject.email,
-            picture: userObject.picture,
-        };
-        saveUserToSession(user);
-        callback(user);
+        const usersJson = localStorage.getItem(REGISTERED_USERS_KEY);
+        return usersJson ? JSON.parse(usersJson) : {};
     } catch (error) {
-        console.error("Error decoding credential response: ", error);
+        console.error("Could not parse registered users:", error);
+        return {};
     }
 };
 
-// Prompts the user to sign in with Google.
-export const signIn = () => {
-    if (!GOOGLE_CLIENT_ID) {
-        console.error("Cannot sign in: Google Client ID is not configured.");
-        return;
+// Helper to save registered users to localStorage
+const saveRegisteredUsers = (users: Record<string, string>) => {
+    try {
+        localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
+    } catch (error) {
+        console.error("Could not save registered users:", error);
     }
-     if (typeof window.google === 'undefined') {
-        console.error("Cannot sign in: Google Identity Services script not loaded.");
-        return;
-    }
-    window.google.accounts.id.prompt();
 };
 
-// Signs the user out and clears their session.
-export const signOut = (callback: () => void) => {
-    localStorage.removeItem(USER_SESSION_KEY);
-    if (window.google?.accounts) {
-        window.google.accounts.id.disableAutoSelect();
-    }
-    callback();
-};
-
-// Saves the user object to localStorage.
+// Creates a user session.
 const saveUserToSession = (user: User) => {
     try {
         localStorage.setItem(USER_SESSION_KEY, JSON.stringify(user));
@@ -72,8 +33,55 @@ const saveUserToSession = (user: User) => {
     }
 };
 
-// Retrieves the user object from localStorage.
-export const getUserFromSession = (): User | null => {
+// Helper to format user name from email
+const formatUserName = (email: string): string => {
+    const namePart = email.split('@')[0];
+    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+};
+
+// Registers a new user.
+export const register = (email: string, password: string):User | null => {
+    const users = getRegisteredUsers();
+    if (users[email]) {
+        throw new Error("User with this email already exists.");
+    }
+    
+    users[email] = password; // In a real app, you'd hash this password.
+    saveRegisteredUsers(users);
+
+    const newUser: User = {
+        email,
+        name: formatUserName(email)
+    };
+    saveUserToSession(newUser);
+    return newUser;
+};
+
+
+// Logs in an existing user.
+export const login = (email: string, password: string): User | null => {
+    const users = getRegisteredUsers();
+    if (!users[email] || users[email] !== password) {
+        throw new Error("Invalid email or password.");
+    }
+    
+    const loggedInUser: User = {
+        email,
+        name: formatUserName(email)
+    };
+    saveUserToSession(loggedInUser);
+    return loggedInUser;
+};
+
+// Signs the user out and clears their session.
+export const logout = (callback: () => void) => {
+    localStorage.removeItem(USER_SESSION_KEY);
+    callback();
+};
+
+
+// Retrieves the current user from the session.
+export const getCurrentUser = (): User | null => {
     try {
         const userJson = localStorage.getItem(USER_SESSION_KEY);
         return userJson ? JSON.parse(userJson) : null;

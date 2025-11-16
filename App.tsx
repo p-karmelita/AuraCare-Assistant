@@ -8,35 +8,29 @@ import AboutPage from './components/AboutPage';
 import HomePage from './components/HomePage';
 import IntakePage from './components/IntakePage';
 import Footer from './components/Footer';
-import LoginPrompt from './components/LoginPrompt';
+import AuthModal from './components/LoginPrompt';
+import { UserIcon } from './components/icons/UserIcon';
 
 const App: React.FC = () => {
   const [page, setPage] = useState<AppPage>('home');
   const [user, setUser] = useState<User | null>(null);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     // Check for existing user session on initial load
-    const existingUser = authService.getUserFromSession();
+    const existingUser = authService.getCurrentUser();
     if (existingUser) {
       setUser(existingUser);
     }
-    // Initialize Google Auth once
-    authService.initGoogleAuth(handleLoginSuccess);
   }, []);
 
   const handleLoginSuccess = (loggedInUser: User) => {
     setUser(loggedInUser);
-    setShowLoginPrompt(false);
-    // If the user was trying to start intake, navigate them there now
-    if (page !== 'intake') {
-      // Optional: you might want to navigate to intake automatically after login
-      // navigateTo('intake');
-    }
+    setShowAuthModal(false);
   };
 
   const handleLogout = () => {
-    authService.signOut(() => {
+    authService.logout(() => {
       setUser(null);
       navigateTo('home'); // Go to home page on logout
     });
@@ -50,7 +44,7 @@ const App: React.FC = () => {
     if (user) {
       navigateTo('intake');
     } else {
-      setShowLoginPrompt(true);
+      setShowAuthModal(true);
     }
   };
 
@@ -59,6 +53,7 @@ const App: React.FC = () => {
       case 'home':
         return <HomePage onGetStarted={handleStartIntake} />;
       case 'intake':
+        // If user is not logged in, redirect to home which will prompt login if they try again
         return user ? <IntakePage /> : <HomePage onGetStarted={handleStartIntake} />;
       case 'about':
         return <AboutPage onGetStarted={handleStartIntake} />;
@@ -98,12 +93,15 @@ const App: React.FC = () => {
              <div className="border-l border-slate-700 h-6 mx-2"></div>
             {user ? (
                 <div className="flex items-center space-x-3">
-                    <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full border-2 border-slate-600" />
+                    <div className="flex items-center space-x-2">
+                      <UserIcon className="w-7 h-7 text-slate-400 border-2 border-slate-600 rounded-full p-0.5" />
+                      <span className="text-sm text-slate-300 font-medium hidden sm:inline">{user.name}</span>
+                    </div>
                     <button onClick={handleLogout} className="text-slate-300 hover:text-red-400 transition-colors text-sm font-medium">Logout</button>
                 </div>
             ) : (
-                 <button onClick={() => setShowLoginPrompt(true)} className="text-cyan-300 hover:text-cyan-200 transition-colors text-sm font-semibold bg-cyan-500/10 px-3 py-1.5 rounded-md">
-                    Sign In
+                 <button onClick={() => setShowAuthModal(true)} className="text-cyan-300 hover:text-cyan-200 transition-colors text-sm font-semibold bg-cyan-500/10 px-3 py-1.5 rounded-md">
+                    Login / Register
                 </button>
             )}
         </nav>
@@ -113,7 +111,7 @@ const App: React.FC = () => {
         {renderPage()}
       </main>
 
-      {showLoginPrompt && <LoginPrompt onClose={() => setShowLoginPrompt(false)} onLoginSuccess={handleLoginSuccess} />}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onLoginSuccess={handleLoginSuccess} />}
 
       <Footer onNavigate={navigateTo} />
       <Chatbot />

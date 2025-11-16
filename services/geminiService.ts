@@ -19,6 +19,28 @@ const getChatSession = () => {
     return chat;
 }
 
+export const analyzeImage = async (prompt: string, imageBase64: string, mimeType: string): Promise<string> => {
+    try {
+        const imagePart = {
+            inlineData: {
+                data: imageBase64,
+                mimeType: mimeType
+            }
+        };
+        const textPart = { text: prompt };
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts: [textPart, imagePart] }
+        });
+
+        return response.text;
+    } catch (error) {
+        console.error("Error analyzing image:", error);
+        throw new Error("Failed to analyze the image with the AI model.");
+    }
+};
+
 export const getSpecialtySuggestion = async (patient: Patient): Promise<SpecialtyResponse> => {
   try {
     const prompt = `A patient provides the following information:

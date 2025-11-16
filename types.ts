@@ -1,3 +1,4 @@
+
 export interface Patient {
   fullName: string;
   dob: string;
@@ -12,7 +13,7 @@ export interface Patient {
 export interface User {
   name: string;
   email: string;
-  picture: string;
+  picture?: string;
 }
 
 export interface Doctor {
@@ -31,17 +32,10 @@ export interface SpecialtyResponse {
 }
 
 export type AppPage = 'home' | 'intake' | 'about';
-export type IntakeStep = 'intake' | 'specialty' | 'doctors' | 'confirmation';
+export type IntakeStep = 'intake' | 'specialty' | 'doctors' | 'confirmation' | 'imageAnalysis';
 
 
 export interface GroundingSource {
   uri: string;
   title: string;
-}
-
-// Fix: Add global declaration for window.google to solve TypeScript errors related to the Google Identity Services script.
-declare global {
-  interface Window {
-    google: any;
-  }
 }
