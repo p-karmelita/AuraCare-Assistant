@@ -1,4 +1,3 @@
-
 export interface Patient {
   fullName: string;
   dob: string;
@@ -7,6 +6,13 @@ export interface Patient {
   pastConditions?: string;
   surgeries?: string;
   medications?: string;
+}
+
+// Fix: Add User interface for authentication, which was missing and causing import errors.
+export interface User {
+  name: string;
+  email: string;
+  picture: string;
 }
 
 export interface Doctor {
@@ -33,13 +39,7 @@ export interface GroundingSource {
   title: string;
 }
 
-export interface User {
-    name: string;
-    email: string;
-    picture: string;
-}
-
-// FIX: Add a global declaration for the `google` object on the `window` to resolve TypeScript errors.
+// Fix: Add global declaration for window.google to solve TypeScript errors related to the Google Identity Services script.
 declare global {
   interface Window {
     google: any;
