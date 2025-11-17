@@ -6,6 +6,7 @@ import { MicrophoneIcon } from './icons/MicrophoneIcon';
 import { XMarkIcon } from './icons/XMarkIcon';
 import { AuraCareLogo } from './icons/AuraCareLogo';
 import { encode, decode, decodeAudioData } from '../utils/audio';
+import { useTranslations } from '../hooks/useTranslations';
 
 interface VoiceIntakeModalProps {
   onClose: () => void;
@@ -19,25 +20,8 @@ type ConversationTurn = {
 
 type Status = 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'done' | 'error';
 
-const submitPatientIntakeFormDeclaration: FunctionDeclaration = {
-    name: 'submitPatientIntakeForm',
-    parameters: {
-      type: Type.OBJECT,
-      description: 'Submits the collected patient intake information.',
-      properties: {
-        fullName: { type: Type.STRING, description: 'The full name of the patient.' },
-        dob: { type: Type.STRING, description: 'The patient\'s date of birth in YYYY-MM-DD format.' },
-        contact: { type: Type.STRING, description: 'The patient\'s email address or phone number.' },
-        symptoms: { type: Type.STRING, description: 'A detailed description of the patient\'s symptoms.' },
-        pastConditions: { type: Type.STRING, description: 'Any past medical conditions the patient has had.' },
-        surgeries: { type: Type.STRING, description: 'Any previous surgeries the patient has had.' },
-        medications: { type: Type.STRING, description: 'A list of current medications the patient is taking.' },
-      },
-      required: ['fullName', 'dob', 'contact', 'symptoms'],
-    },
-};
-
 const VoiceIntakeModal: React.FC<VoiceIntakeModalProps> = ({ onClose, onSubmit }) => {
+    const { t } = useTranslations();
     const [status, setStatus] = useState<Status>('idle');
     const [transcript, setTranscript] = useState<ConversationTurn[]>([]);
     const [currentInterimTranscript, setCurrentInterimTranscript] = useState('');
@@ -53,14 +37,32 @@ const VoiceIntakeModal: React.FC<VoiceIntakeModalProps> = ({ onClose, onSubmit }
     const transcriptEndRef = useRef<HTMLDivElement | null>(null);
     const micVolumeRef = useRef(0);
 
+    const submitPatientIntakeFormDeclaration: FunctionDeclaration = {
+        name: 'submitPatientIntakeForm',
+        parameters: {
+          type: Type.OBJECT,
+          description: 'Submits the collected patient intake information.',
+          properties: {
+            fullName: { type: Type.STRING, description: 'The full name of the patient.' },
+            dob: { type: Type.STRING, description: 'The patient\'s date of birth in YYYY-MM-DD format.' },
+            contact: { type: Type.STRING, description: 'The patient\'s email address or phone number.' },
+            symptoms: { type: Type.STRING, description: 'A detailed description of the patient\'s symptoms.' },
+            pastConditions: { type: Type.STRING, description: 'Any past medical conditions the patient has had.' },
+            surgeries: { type: Type.STRING, description: 'Any previous surgeries the patient has had.' },
+            medications: { type: Type.STRING, description: 'A list of current medications the patient is taking.' },
+          },
+          required: ['fullName', 'dob', 'contact', 'symptoms'],
+        },
+    };
+
     const statusText: Record<Status, string> = {
-        idle: 'Click start to begin',
-        connecting: 'Connecting...',
-        listening: 'Listening...',
-        thinking: 'I\'m thinking...',
-        speaking: 'Speaking...',
-        done: 'Conversation complete!',
-        error: 'An error occurred. Please try again.'
+        idle: t('voiceStatusIdle'),
+        connecting: t('voiceStatusConnecting'),
+        listening: t('voiceStatusListening'),
+        thinking: t('voiceStatusThinking'),
+        speaking: t('voiceStatusSpeaking'),
+        done: t('voiceStatusDone'),
+        error: t('voiceStatusError')
     };
 
     useEffect(() => {
@@ -222,15 +224,7 @@ const VoiceIntakeModal: React.FC<VoiceIntakeModalProps> = ({ onClose, onSubmit }
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
                     tools: [{ functionDeclarations: [submitPatientIntakeFormDeclaration] }],
-                    systemInstruction: `You are a compassionate and efficient healthcare intake assistant named Aura. Your goal is to collect patient information for a new appointment. You must ask for the following pieces of information one by one: 
-1. Full name.
-2. Date of birth.
-3. Contact information (email or phone).
-4. A description of their current symptoms.
-5. Any past medical conditions.
-6. Any previous surgeries.
-7. A list of their current medications.
-Be friendly and clear. If a patient says they have none for medical history items, that's okay. Once you have all the information, confirm it with the patient by summarizing the details. After the patient confirms, call the \`submitPatientIntakeForm\` function with the collected data. Do not call the function until the user confirms the details are correct. Start the conversation by introducing yourself.`
+                    systemInstruction: t('voiceSystemInstruction')
                 },
             });
         } catch (error) {
@@ -241,22 +235,22 @@ Be friendly and clear. If a patient says they have none for medical history item
     
     return (
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-2xl flex items-center justify-center z-50 p-4 animate-fade-in" aria-modal="true">
-            <div className="bg-black/30 border border-slate-700/50 w-full max-w-2xl h-[90vh] max-h-[700px] rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{boxShadow: 'var(--glow-cyan)'}}>
-                <header className="flex items-center justify-between p-4 border-b border-slate-700/50 flex-shrink-0">
+            <div className="bg-white/80 dark:bg-black/30 border border-slate-300 dark:border-slate-700/50 w-full max-w-2xl h-[90vh] max-h-[700px] rounded-2xl shadow-2xl flex flex-col overflow-hidden dark:shadow-[var(--glow-cyan)]">
+                <header className="flex items-center justify-between p-4 border-b border-slate-300 dark:border-slate-700/50 flex-shrink-0">
                     <div className="flex items-center">
-                        <AuraCareLogo className="h-8 w-8 text-cyan-400" />
-                        <h2 className="ml-3 text-xl font-bold text-slate-200">AuraCare Voice Assistant</h2>
+                        <AuraCareLogo className="h-8 w-8 text-cyan-500 dark:text-cyan-400" />
+                        <h2 className="ml-3 text-xl font-bold text-slate-800 dark:text-slate-200">{t('voiceAssistantTitle')}</h2>
                     </div>
-                    <button onClick={onClose} className="p-1 rounded-full text-slate-400 hover:bg-slate-700">
+                    <button onClick={onClose} className="p-1 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
                         <XMarkIcon className="w-6 h-6" />
                     </button>
                 </header>
 
-                <main className="flex-grow p-6 overflow-y-auto bg-black/20">
+                <main className="flex-grow p-6 overflow-y-auto bg-slate-100/50 dark:bg-black/20">
                     <div className="space-y-4">
                         {transcript.map((turn, index) => (
                             <div key={index} className={`flex ${turn.speaker === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[80%] px-4 py-2 rounded-xl ${turn.speaker === 'user' ? 'bg-cyan-500/60 text-white' : 'bg-slate-700/50 text-slate-200'}`}>
+                                <div className={`max-w-[80%] px-4 py-2 rounded-xl ${turn.speaker === 'user' ? 'bg-cyan-500/60 text-white' : 'bg-slate-300 dark:bg-slate-700/50 text-slate-800 dark:text-slate-200'}`}>
                                     <p>{turn.text}</p>
                                 </div>
                             </div>
@@ -272,9 +266,9 @@ Be friendly and clear. If a patient says they have none for medical history item
                     </div>
                 </main>
 
-                <footer className="p-4 border-t border-slate-700/50 flex-shrink-0 bg-slate-800/50">
+                <footer className="p-4 border-t border-slate-300 dark:border-slate-700/50 flex-shrink-0 bg-white/70 dark:bg-slate-800/50">
                     <div className="flex items-center justify-between">
-                         <div className="flex items-center text-slate-300">
+                         <div className="flex items-center text-slate-700 dark:text-slate-300">
                            <div className="relative">
                                 {status === 'listening' && (
                                     <div
@@ -285,17 +279,17 @@ Be friendly and clear. If a patient says they have none for medical history item
                                         }}
                                     />
                                 )}
-                               <MicrophoneIcon className={`relative w-6 h-6 transition-colors ${status === 'listening' ? 'text-green-400' : 'text-slate-400'}`} />
+                               <MicrophoneIcon className={`relative w-6 h-6 transition-colors ${status === 'listening' ? 'text-green-400' : 'text-slate-500 dark:text-slate-400'}`} />
                            </div>
                            <span className="ml-3 font-medium">{statusText[status]}</span>
                         </div>
                         {status === 'idle' || status === 'error' ? (
                             <button onClick={startConversation} className="px-6 py-2 bg-cyan-600 text-white rounded-lg font-semibold hover:bg-cyan-700 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.4)]">
-                                Start Conversation
+                                {t('startConversation')}
                             </button>
                         ) : (
                             <button onClick={() => { stopConversation(); onClose(); }} className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-[0_0_10px_rgba(220,38,38,0.4)]">
-                                End Conversation
+                                {t('endConversation')}
                             </button>
                         )}
                     </div>

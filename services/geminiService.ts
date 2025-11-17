@@ -1,7 +1,7 @@
 
 
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { Doctor, GroundingSource, Patient, SpecialtyResponse } from '../types';
+import { Doctor, GroundingSource, MedicalEvent, Patient, SpecialtyResponse } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -140,5 +140,45 @@ export const getChatbotResponse = async (message: string): Promise<string> => {
     } catch (error) {
         console.error("Error fetching chatbot response:", error);
         throw new Error("Failed to get response from AuraCare Assistant.");
+    }
+};
+
+export const getMedicalEvents = async (): Promise<{ events: MedicalEvent[], sources: GroundingSource[] }> => {
+    try {
+        const prompt = `Find exactly 3 upcoming major international healthcare or medical technology conferences. For each, provide the name, date, location, a brief one-sentence description, and the official URL. Respond ONLY with a valid JSON array of objects, without any markdown formatting or other text. Each object should have keys: 'name', 'date', 'location', 'description', and 'url'.`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+            },
+        });
+        
+        const textResponse = response.text.trim();
+        const jsonMatch = textResponse.match(/```(json)?\s*([\s\S]*?)\s*```/);
+        const jsonString = jsonMatch ? jsonMatch[2] : textResponse;
+        
+        const events = JSON.parse(jsonString) as MedicalEvent[];
+
+        const sources: GroundingSource[] = [];
+        const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+
+        if (groundingChunks) {
+            for (const chunk of groundingChunks) {
+                if (chunk.web) {
+                    sources.push({
+                        uri: chunk.web.uri,
+                        title: chunk.web.title,
+                    });
+                }
+            }
+        }
+        
+        return { events, sources };
+
+    } catch (error) {
+        console.error("Error fetching medical events with Google Search:", error);
+        throw new Error("Failed to get medical events from AI with Google Search data.");
     }
 };

@@ -7,6 +7,7 @@ import DoctorClinicSelector from './DoctorClinicSelector';
 import Confirmation from './Confirmation';
 import VoiceIntakeModal from './VoiceIntakeModal';
 import ImageAnalysis from './ImageAnalysis';
+import { useTranslations } from '../hooks/useTranslations';
 
 const initialPatientData: Patient = {
     fullName: '',
@@ -19,6 +20,7 @@ const initialPatientData: Patient = {
 };
 
 const IntakePage: React.FC = () => {
+    const { t } = useTranslations();
     const [step, setStep] = useState<IntakeStep>('intake');
     const [patientData, setPatientData] = useState<Patient>(initialPatientData);
     const [specialty, setSpecialty] = useState<string>('');
@@ -121,15 +123,15 @@ const IntakePage: React.FC = () => {
     const getStepTitle = () => {
         switch (step) {
             case 'intake':
-                return 'Patient Intake';
+                return t('stepPatientIntake');
             case 'imageAnalysis':
-                return 'Premium AI Image Analysis';
+                return t('stepImageAnalysis');
             case 'specialty':
-                return 'AI Symptom Analysis';
+                return t('stepSymptomAnalysis');
             case 'doctors':
-                return 'Find a Specialist';
+                return t('stepFindSpecialist');
             case 'confirmation':
-                return 'Confirmation & Automated Workflows';
+                return t('stepConfirmation');
             default:
                 return 'AuraCare Assistant';
         }
@@ -140,11 +142,11 @@ const IntakePage: React.FC = () => {
             <div className="z-10 w-full max-w-2xl animate-fade-in">
                 <div
                     className={`
-                        bg-black/40 backdrop-blur-2xl border border-cyan-400/50 rounded-lg shadow-[0_0_30px_rgba(6,182,212,0.3),inset_0_0_10px_rgba(6,182,212,0.1)]
+                        bg-white/60 dark:bg-black/40 backdrop-blur-2xl border border-cyan-400/30 dark:border-cyan-400/50 rounded-lg shadow-2xl dark:shadow-[0_0_30px_rgba(6,182,212,0.3),inset_0_0_10px_rgba(6,182,212,0.1)]
                         flex flex-col h-[85vh] max-h-[750px]
                     `}
                 >
-                    <h3 className="text-md font-bold p-4 border-b text-cyan-200 border-cyan-300/20 flex-shrink-0">
+                    <h3 className="text-md font-bold p-4 border-b text-cyan-600 dark:text-cyan-200 border-cyan-300/40 dark:border-cyan-300/20 flex-shrink-0">
                         {getStepTitle()}
                     </h3>
                     <div className="p-4 sm:p-6 overflow-y-auto flex-grow">
