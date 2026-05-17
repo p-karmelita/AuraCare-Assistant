@@ -1,16 +1,8 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import en from '../locales/en.json';
-import de from '../locales/de.json';
-import ar from '../locales/ar.json';
+import { allTranslations } from '../locales/translations';
 
 type Locale = 'en' | 'de' | 'ar';
 type Translations = { [key: string]: string };
-
-const allTranslations: Record<Locale, Translations> = {
-  en: en as Translations,
-  de: de as Translations,
-  ar: ar as Translations,
-};
 
 interface I18nContextType {
   locale: Locale;
@@ -30,9 +22,14 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [locale]);
 
   const t = useCallback((key: string, replacements?: { [key: string]: string | number }): string => {
-    // Access translations directly from the imported objects
-    const translations = allTranslations[locale];
-    let translation = translations[key] || (allTranslations['en'] as Translations)[key] || key;
+    // Access translations directly from the imported objects, handling potential .default wrapper
+    const translationsObj = allTranslations[locale];
+    const translations = (translationsObj?.default || translationsObj || {}) as Translations;
+    
+    const englishTranslationsObj = allTranslations['en'];
+    const englishTranslations = (englishTranslationsObj?.default || englishTranslationsObj || {}) as Translations;
+
+    let translation = translations[key] || englishTranslations[key] || key;
     
     if (replacements && typeof translation === 'string') {
       Object.keys(replacements).forEach(placeholder => {
