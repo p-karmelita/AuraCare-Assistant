@@ -5,7 +5,7 @@
 ---
 
 <p align="center">
-  <a href="https://auracare-assistant-597762679776.us-west1.run.app/" target="_blank">
+  <a href="https://aura-care-assistant.replit.app/" target="_blank">
     <img src="https://img.shields.io/badge/LIVE%20DEMO-Launch%20AuraCare-06b6d4?style=for-the-badge&logo=google-cloud" alt="Live Demo" />
   </a>
 </p>
