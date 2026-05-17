@@ -1,7 +1,16 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import en from '../locales/en.json';
+import de from '../locales/de.json';
+import ar from '../locales/ar.json';
 
 type Locale = 'en' | 'de' | 'ar';
 type Translations = { [key: string]: string };
+
+const allTranslations: Record<Locale, Translations> = {
+  en: en as Translations,
+  de: de as Translations,
+  ar: ar as Translations,
+};
 
 interface I18nContextType {
   locale: Locale;
@@ -13,42 +22,25 @@ export const I18nContext = createContext<I18nContextType | undefined>(undefined)
 
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [locale, setLocale] = useState<Locale>('en');
-  const [translations, setTranslations] = useState<Translations>({});
-  const [defaultTranslations, setDefaultTranslations] = useState<Translations>({});
 
-  // Fetch default English translations on mount
-  useEffect(() => {
-    fetch('/locales/en.json')
-      .then(response => response.json())
-      .then(data => setDefaultTranslations(data))
-      .catch(error => console.error('Failed to load default translations:', error));
-  }, []);
-
-  // Fetch translations for the current locale when it changes
+  // Update document language and direction
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
-
-    fetch(`/locales/${locale}.json`)
-      .then(response => response.json())
-      .then(data => setTranslations(data))
-      .catch(error => {
-        console.error(`Failed to load translations for ${locale}:`, error);
-        setTranslations({}); // Fallback to empty if load fails
-      });
   }, [locale]);
 
   const t = useCallback((key: string, replacements?: { [key: string]: string | number }): string => {
-    // Use loaded translations for the current locale, fallback to English, then to the key itself
-    let translation = translations[key] || defaultTranslations[key] || key;
+    // Access translations directly from the imported objects
+    const translations = allTranslations[locale];
+    let translation = translations[key] || (allTranslations['en'] as Translations)[key] || key;
     
-    if (replacements) {
+    if (replacements && typeof translation === 'string') {
       Object.keys(replacements).forEach(placeholder => {
-        translation = translation.replace(`{{${placeholder}}}`, String(replacements[placeholder]));
+        translation = (translation as string).replace(`{{${placeholder}}}`, String(replacements[placeholder]));
       });
     }
     return translation;
-  }, [translations, defaultTranslations]);
+  }, [locale]);
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>

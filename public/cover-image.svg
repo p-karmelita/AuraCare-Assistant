@@ -1,0 +1,50 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+  <defs>
+    <linearGradient id="cover-bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(12, 20, 38)"></stop>
+      <stop offset="100%" style="stop-color:rgb(15, 23, 42)"></stop>
+    </linearGradient>
+    <filter id="cover-cyan-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="20" result="coloredBlur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="coloredBlur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+    <filter id="cover-text-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"></feGaussianBlur>
+      <feFlood flood-color="#06b6d4" result="floodColor"></feFlood>
+      <feComposite in="floodColor" in2="blur" operator="in" result="coloredBlur"></feComposite>
+      <feMerge>
+        <feMergeNode in="coloredBlur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#cover-bg-gradient)"></rect>
+
+  <!-- Central Graphic -->
+  <g transform="translate(600, 270) scale(4)">
+    <!-- AuraCare Logo with glow -->
+    <g fill="#06b6d4" style="filter: url(#cover-cyan-glow);" opacity="0.4">
+        <circle cx="32" cy="32" r="28"></circle>
+    </g>
+    <g fill="#a5f3fc">
+        <path opacity="0.7" fill-rule="evenodd" clip-rule="evenodd" d="M32 10c12.15 0 22 9.85 22 22s-9.85 22-22 22S10 44.15 10 32 19.85 10 32 10zm-4.728 12.272a1.5 1.5 0 012.122 0l4.596 4.596a1.5 1.5 0 010 2.122L29.4 33.586a1.5 1.5 0 01-2.122 0l-4.596-4.596a1.5 1.5 0 010-2.122l4.596-4.596zM28 32a1.5 1.5 0 011.5-1.5h5a1.5 1.5 0 010 3h-5A1.5 1.5 0 0128 32zm8.596-4.596a1.5 1.5 0 012.122 0l4.596 4.596a1.5 1.5 0 010 2.122L40.728 38.72a1.5 1.5 0 01-2.122 0l-4.596-4.596a1.5 1.5 0 010-2.122l4.596-4.596z"></path>
+        <path d="M30.5 24h3v3h-3v-3zm0 9h3v3h-3v-3zm-9-4.5h3v3h-3v-3zm18 0h3v3h-3v-3z"></path>
+    </g>
+  </g>
+  
+  <!-- Decorative EKG line -->
+  <path d="M 250 315 h 50 l 15 -30 l 30 60 l 15 -30 h 550" stroke="#0891b2" stroke-width="2.5" fill="none" opacity="0.3"></path>
+
+  <!-- Text -->
+  <text x="50%" y="480" text-anchor="middle" font-size="72" font-weight="bold" fill="#e2e8f0" style="filter: url(#cover-text-glow);">
+    AuraCare Assistant
+  </text>
+  <text x="50%" y="550" text-anchor="middle" font-size="24" fill="#94a3b8" letter-spacing="1">
+    Humanizing Healthcare Administration with the Power of Generative AI
+  </text>
+</svg>
